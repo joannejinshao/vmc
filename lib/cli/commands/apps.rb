@@ -556,6 +556,10 @@ module VMC::Cli::Command
         # Stage the app appropriately and do the appropriate fingerprinting, etc.
         if war_file = Dir.glob('*.war').first
           VMC::Cli::ZipUtil.unpack(war_file, explode_dir)
+        #XXX Added jar support
+        elsif jar_file = Dir.glob('*.jar').first
+          FileUtils.mkdir(explode_dir)
+          FileUtils.cp_r(jar_file, explode_dir)
         else
           FileUtils.mkdir(explode_dir)
           files = Dir.glob('{*,.[^\.]*}')
