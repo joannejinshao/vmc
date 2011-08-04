@@ -3,11 +3,17 @@ require 'fileutils'
 require 'tempfile'
 require 'tmpdir'
 require 'set'
+require 'rexml/document'
 
 module VMC::Cli::Command
 
   class Apps < Base
     include VMC::Cli::ServicesHelper
+    include REXML
+    
+    #chang by zjz
+    #Store xml data
+    attr_accessor :isServcie, :cService, :args
 
     def list
       apps = client.apps
@@ -336,7 +342,34 @@ module VMC::Cli::Command
       upload_app_bits(appname, path)
       restart appname if app[:state] == 'STARTED'
     end
-
+    
+    #chang by zjz 2011/8/1
+    #parse user's config XML
+    def parseXML(appname, path)
+      file = path + "/" + appname + ".xml"
+      exist = File.exist? (file)
+      if(exist) then
+        display "Parse user's xml"
+        input = File.new(file)
+        doc = Document.new(input)
+        root = doc.root
+        @isService = root.elements['isService'].text
+        args = Hash.new(nil)
+        doc.elements.each('*/args/arg') { |em|
+          key = em.attributes['key']
+          args[key] = em.attributes['value']
+        }
+        @args = args
+        cServcie = Array.new
+        doc.elements.each('*/cService/arg') { |em| 
+          cServcie << em.attributes['name']
+        }
+        @cService = cServcie
+      else
+        display "User's xml not exist"
+      end
+    end
+    
     def push(appname=nil)
       instances = @options[:instances] || 1
       exec = @options[:exec] || 'thin start'
@@ -382,6 +415,10 @@ module VMC::Cli::Command
       unless app_checked
         err "Application '#{appname}' already exists, use update or delete." if app_exists?(appname)
       end
+      
+      #chang by zjz 2011/8/1
+      #parse xml
+      parseXML(appname, path)
 
       unless no_prompt || url
         url = ask("Application Deployed URL: '#{appname}.#{VMC::Cli::Config.suggest_url}'? ")
@@ -454,7 +491,11 @@ module VMC::Cli::Command
         :instances => instances,
         :resources => {
           :memory => mem_quota
+          
         },
+        :isService => @isService,
+        :cService => @cService,
+        :args => @args,
       }
 
       # Send the manifest to the cloud controller
