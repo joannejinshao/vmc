@@ -24,6 +24,27 @@ module VMC::Cli
       end
       display services_table
     end
+    
+    def display_custom_services(services=nil)
+      services ||= client.custom_services_info
+      
+      display "\n============== Custom Services ==============\n\n"
+
+      return display "No custom services available" if services.empty?
+      
+      displayed_services = []
+      services.each do |service_type, value|                 
+        displayed_services << [ value, service_type ]        
+      end
+      displayed_services.sort! { |a, b| a.first.to_s <=> b.first.to_s}
+
+      services_table = table do |t|
+        t.headings = 'Service', 'Type'
+        displayed_services.each { |s| t << s }
+      end
+      display services_table
+      
+    end
 
     def display_provisioned_services(services=nil)
       services ||= client.services

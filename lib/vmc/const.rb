@@ -17,5 +17,6 @@ module VMC
   APPS_PATH            = '/apps'
   SERVICES_PATH        = '/services'
   USERS_PATH           = '/users'
+  CUSTOM_SERVICES_PATH = '/custom_services'
 
 end

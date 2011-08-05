@@ -353,7 +353,14 @@ module VMC::Cli::Command
         input = File.new(file)
         doc = Document.new(input)
         root = doc.root
+        #Modified by shaoj
+        #The value of @isService should be a bool, instead of string
         @isService = root.elements['isService'].text
+        if @isService == "true" then
+          @isService = true
+        else
+          @isService = false
+        end
         args = Hash.new(nil)
         doc.elements.each('*/args/arg') { |em|
           key = em.attributes['key']

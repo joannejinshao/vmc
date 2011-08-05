@@ -2,6 +2,3 @@ Gemfile.lock
 *.gem
 .DS_Store
 .project
-bin/echo.jar
-bin/hello.jarjar
-bin/jpetstore.war

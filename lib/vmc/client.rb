@@ -62,6 +62,11 @@ class VMC::Client
     check_login_status
     json_get(VMC::GLOBAL_SERVICES_PATH)
   end
+  
+  def custom_services_info
+    check_login_status
+    json_get(VMC::CUSTOM_SERVICES_PATH)
+  end
 
   ######################################################
   # Apps
