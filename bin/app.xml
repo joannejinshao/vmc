@@ -1,0 +1,9 @@
+<application>
+	<app-name>app</app-name>
+	<app-type>spring</app-type>
+	<version>1.6</version>
+	<isService>false</isService>
+	<cService>
+		<arg name="echo" />		
+	</cService>	
+</application>
