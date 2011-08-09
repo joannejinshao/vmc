@@ -63,6 +63,7 @@ module VMC::Cli::Command
       end
 
       app[:state] = 'STARTED'
+      app[:args] = @args
       client.update_app(appname, app)
 
       Thread.kill(t)

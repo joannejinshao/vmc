@@ -1,11 +1,12 @@
 <application>
-	<app-name>echo</app-name>
+	<app-name>key</app-name>
 	<app-type>java</app-type>
 	<version>1.6</version>
 	<isService>true</isService>
 	<cService>		
 	</cService>
 	<args>
-		<arg key="PORT" />		
+		<arg key="PORT"/>
+		<arg key="name" value="abc"/>		
 	</args>
 </application>

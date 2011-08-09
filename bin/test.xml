@@ -1,15 +1,8 @@
 <application>
 	<app-name>test</app-name>
-	<app-type>java</app-type>
-	<version>1.6</version>
-	<isService>true</isService>
+	<app-type>java-web</app-type>
+	<version>1.6</version>	
 	<cService>
-		<arg name="servcie1" />
-		<arg name="service2" />
-	</cService>
-	<args>
-		<arg key="PORT" />
-		<arg key="IP" />
-		<arg key="test" value="test" />	
-	</args>
+		<arg name="key" />		
+	</cService>	
 </application>
