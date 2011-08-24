@@ -1,8 +1,12 @@
 <application>
 	<app-name>test</app-name>
-	<app-type>java-web</app-type>
+	<app-type>Spring</app-type>
 	<version>1.6</version>	
+	<isService>
+		false
+	</isService>
 	<cService>
-		<arg name="key" />		
+		<arg name="key" />
+		<arg name="history" />	
 	</cService>	
 </application>

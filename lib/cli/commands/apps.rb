@@ -347,6 +347,7 @@ module VMC::Cli::Command
     #chang by zjz 2011/8/1
     #parse user's config XML
     def parseXML(appname, path)
+      framework = nil
       file = path + "/" + appname + ".xml"
       exist = File.exist? (file)
       if(exist) then
@@ -356,6 +357,11 @@ module VMC::Cli::Command
         root = doc.root
         #Modified by shaoj
         #The value of @isService should be a bool, instead of string
+        type = root.elements['app-type'].text
+        if(type)
+          framework = VMC::Cli::Framework.lookup(type)   
+        end
+        
         @isService = root.elements['isService'].text
         if @isService == "true" then
           @isService = true
@@ -376,6 +382,7 @@ module VMC::Cli::Command
       else
         display "User's xml not exist"
       end
+      framework
     end
     
     def push(appname=nil)
@@ -426,7 +433,9 @@ module VMC::Cli::Command
       
       #chang by zjz 2011/8/1
       #parse xml
-      parseXML(appname, path)
+      
+      
+      framework = parseXML(appname, path)
 
       unless no_prompt || url
         url = ask("Application Deployed URL: '#{appname}.#{VMC::Cli::Config.suggest_url}'? ")
@@ -442,8 +451,8 @@ module VMC::Cli::Command
       url = "#{appname}.#{VMC::Cli::Config.suggest_url}" if url.nil? || url.empty?
 
       # Detect the appropriate framework.
-      framework = nil
-      unless ignore_framework
+      
+      unless ignore_framework || framework
         framework = VMC::Cli::Framework.detect(path)
         framework_correct = ask("Detected a #{framework}, is this correct? [Yn]: ") if prompt_ok && framework
         framework_correct ||= 'y'
@@ -462,8 +471,10 @@ module VMC::Cli::Command
         end
         # Framework override, deprecated
         exec = framework.exec if framework && framework.exec
-      else
-        framework = VMC::Cli::Framework.new
+      else 
+        unless framework
+          framework = VMC::Cli::Framework.new
+        end
       end
 
       err "Application Type undetermined for path '#{path}'" unless framework
@@ -603,12 +614,17 @@ module VMC::Cli::Command
 
       Dir.chdir(path) do
         # Stage the app appropriately and do the appropriate fingerprinting, etc.
-        if war_file = Dir.glob('*.war').first
+        if war_file = Dir.glob(appname + '.war').first
           VMC::Cli::ZipUtil.unpack(war_file, explode_dir)
         #XXX Added jar support
-        elsif jar_file = Dir.glob('*.jar').first
+        elsif jar_file = Dir.glob(appname + '.jar').first
           FileUtils.mkdir(explode_dir)
           FileUtils.cp_r(jar_file, explode_dir)
+        elsif dir = Dir.glob(appname).first
+          FileUtils.mkdir(explode_dir)          
+          files = Dir.glob(dir + '/{*,.[^\.]*}')
+          files.delete('.git') if files
+          FileUtils.cp_r(files, explode_dir)
         else
           FileUtils.mkdir(explode_dir)
           files = Dir.glob('{*,.[^\.]*}')
