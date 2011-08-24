@@ -1,0 +1,12 @@
+<application>
+	<app-name>history</app-name>
+	<app-type>Java</app-type>
+	<version>1.6</version>
+	<isService>true</isService>
+	<cService>
+		<arg name="key" />		
+	</cService>
+	<args>
+		<arg key="PORT"/>
+	</args>
+</application>
