@@ -52,13 +52,21 @@ module VMC::Cli
             else
               return Framework.lookup('JavaWeb')
             end
+            
+          #Modify by zjz 2011/8/16
+          #detect RMI application
+=begin
+          elsif apptype.to_s == "rmiserver" and Dir.glob('*.jar').first
+            jar_file = Dir.glob('*.jar').first
+            contents = ZipUtil.entry_lines(jar_file)
+            return Framework.lookup("RMI")
+=end
+            
           elsif Dir.glob('*.jar').first
             jar_file = Dir.glob('*.jar').first
             contents = ZipUtil.entry_lines(jar_file)
             return Framework.lookup('Java')        
             
-            
-
           # Simple Ruby Apps
           elsif !Dir.glob('*.rb').empty?
             matched_file = nil

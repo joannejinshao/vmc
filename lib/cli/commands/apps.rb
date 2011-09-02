@@ -13,7 +13,7 @@ module VMC::Cli::Command
     
     #chang by zjz
     #Store xml data
-    attr_accessor :isServcie, :cService, :args
+    attr_accessor :isServcie, :cService, :args, :apptype
 
     def list
       apps = client.apps
@@ -64,6 +64,7 @@ module VMC::Cli::Command
 
       app[:state] = 'STARTED'
       app[:args] = @args
+      app[:apptype] = @apptype
       client.update_app(appname, app)
 
       Thread.kill(t)
@@ -344,7 +345,7 @@ module VMC::Cli::Command
       restart appname if app[:state] == 'STARTED'
     end
     
-    #chang by zjz 2011/8/1
+    #changed by zjz 2011/8/1
     #parse user's config XML
     def parseXML(appname, path)
       framework = nil
@@ -379,10 +380,22 @@ module VMC::Cli::Command
           cServcie << em.attributes['name']
         }
         @cService = cServcie
+        
+        if root.elements['app-type'] then
+          @apptype = root.elements['app-type'].text
+        else
+          @apptype = nil
+        end
       else
         display "User's xml not exist"
       end
       framework
+    end
+    
+    def checkCService(appname)
+      err "Application '#{appname}' don't exists, please upload application '#{appname}' firstly." if !app_exists?(appname)
+      app = client.app_info(appname)
+      err "Application '#{appname}' has not started, please run application '#{appname}' first." if app[:state] == 'STOPPED'
     end
     
     def push(appname=nil)
@@ -432,11 +445,11 @@ module VMC::Cli::Command
       end
       
       #chang by zjz 2011/8/1
-      #parse xml
-      
-      
-      framework = parseXML(appname, path)
-
+      #parse xml      
+      framework = parseXML(appname, path)      
+      @cService.each { |em|
+       checkCService(em)
+      }
       unless no_prompt || url
         url = ask("Application Deployed URL: '#{appname}.#{VMC::Cli::Config.suggest_url}'? ")
 
@@ -515,8 +528,9 @@ module VMC::Cli::Command
         :isService => @isService,
         :cService => @cService,
         :args => @args,
+        :apptype => @apptype
       }
-
+      
       # Send the manifest to the cloud controller
       client.create_app(appname, manifest)
       display 'OK'.green
