@@ -7,6 +7,5 @@
 	</cService>
 	<args>
 		<arg key="PORT"/>
-		<arg key="name" value="abc"/>		
 	</args>
 </application>
