@@ -33,8 +33,10 @@ module VMC::Cli
       return display "No custom services available" if services.empty?
       
       displayed_services = []
-      services.each do |service_type, value|                 
-        displayed_services << [ value, service_type ]        
+      services.each do |service_type, values|  
+        values.each do |value| 
+          displayed_services << [ value, service_type ] 
+        end               
       end
       displayed_services.sort! { |a, b| a.first.to_s <=> b.first.to_s}
 
