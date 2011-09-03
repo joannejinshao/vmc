@@ -13,7 +13,7 @@ module VMC::Cli::Command
     
     #chang by zjz
     #Store xml data
-    attr_accessor :isServcie, :cService, :args, :apptype
+    attr_accessor :isServcie, :cService, :args, :apptype, :requirements
 
     def list
       apps = client.apps
@@ -65,6 +65,7 @@ module VMC::Cli::Command
       app[:state] = 'STARTED'
       app[:args] = @args
       app[:apptype] = @apptype
+      app[:requirements] = @requirements
       client.update_app(appname, app)
 
       Thread.kill(t)
@@ -372,9 +373,27 @@ module VMC::Cli::Command
         args = Hash.new(nil)
         doc.elements.each('*/args/arg') { |em|
           key = em.attributes['key']
-          args[key] = em.attributes['value']
+          args[key] = em.attributes['value']         
         }
         @args = args
+        requirements = Array.new
+        doc.elements.each('*/requirements/requirement'){ |em|
+          requirement = Hash.new(nil)
+          requirement['type'] = em.attributes['type']
+          requirement['name'] = em.attributes['name']
+          requirement['index'] = em.attributes['index']
+          destinations = Array.new
+          em.elements.each('destinations/destination'){ |dem|
+            destination = Hash.new(nil)
+            destination['type'] = dem.attributes['type']
+            destination['path'] = dem.attributes['path']
+            destination['xpath'] = dem.attributes['xpath']
+            destinations << destination            
+          }
+          requirement['destinations'] = destinations            
+          requirements << requirement          
+        }
+        @requirements = requirements
         cServcie = Array.new
         doc.elements.each('*/cService/arg') { |em| 
           cServcie << em.attributes['name']
@@ -528,7 +547,8 @@ module VMC::Cli::Command
         :isService => @isService,
         :cService => @cService,
         :args => @args,
-        :apptype => @apptype
+        :apptype => @apptype,
+        :requirements => @requirements
       }
       
       # Send the manifest to the cloud controller

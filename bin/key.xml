@@ -5,7 +5,11 @@
 	<isService>true</isService>
 	<cService>		
 	</cService>
-	<args>
-		<arg key="PORT"/>
-	</args>
+	<requirements>		
+		<requirement type="port" name="port" index="0">
+			<destinations>				
+				<destination type="cmd"/>						
+			</destinations>					
+		</requirement>		
+	</requirements>
 </application>

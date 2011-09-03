@@ -6,7 +6,16 @@
 	<cService>
 		<arg name="key" />		
 	</cService>
-	<args>
-		<arg key="PORT"/>
-	</args>
+	<requirements>		
+		<requirement type="port" name="port" index="0">
+			<destinations>
+				<destination type="cmd"/>						
+			</destinations>					
+		</requirement>
+		<requirement type="port" name="port2" index="1">
+			<destinations>
+				<destination type="xml" path="/settings.xml" xpath="*/port"/>
+			</destinations>					
+		</requirement>		
+	</requirements>
 </application>
