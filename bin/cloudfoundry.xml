@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<Applications
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:noNamespaceSchemaLocation="cf.xsd">
+
+	<Application index="1">
+		<Name>history</Name>
+		<Framework>Java</Framework>
+		<isservice>true</isservice>
+		<ServiceDependency>
+			<Service type="custom" name="key"></Service>		
+		</ServiceDependency>
+		<Ports>		
+			<Port name="port1" primary="true">
+				<destination type="cmd" />				
+			</Port>
+			<Port name="port2">
+				<destination type="file" path="/setting.xml"  placeholder="$PORT" />				
+			</Port>		
+		</Ports>
+	</Application>
+
+	<Application index="2">
+		<Name>history</Name>
+		<Framework>Jar</Framework>
+		<isservice>true</isservice>
+		<ServiceDependency>
+			<Service type="custom" name="key"></Service>		
+		</ServiceDependency>
+		<Ports>		
+			<Port name="port1" primary="true">
+				<destination type="cmd" />				
+			</Port>
+			<Port name="port2">
+				<destination type="file" path="/setting.xml"  placeholder="$PORT" />				
+			</Port>		
+		</Ports>
+	</Application>
+</Applications>

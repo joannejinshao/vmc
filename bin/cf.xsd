@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:element name="Applications">
+		<xs:complexType>
+		<xs:sequence>
+			<xs:elements name="Application" maxOccurs="unbounded">
+				<xs:complexType>
+  				<xs:sequence>
+	 				<xs:element name="Name" type="xs:string"/>
+					<xs:element name="Framework" type="xs:string"/>
+					<xs:element name="isservice" type="xs:boolean" default="false"/>
+					<xs:element name="ServiceDependency" minOccurs="0">
+		 				<xs:complexType>
+		  				<xs:sequence>
+		   					<xs:element name="Service" type="xs:string" maxOccurs="unbounded">
+								<xs:attribute name="type" type="xs:string" use="required"/>
+								<xs:attribute name="name" type="xs:string" use="required"/>
+							<xs:element>
+		  				</xs:sequence>
+		 				</xs:complexType>
+					</xs:element>
+					<xs:element name="Ports">
+						<xs:complexType>
+		  				<xs:sequence>
+		   					<xs:element name="Port" type="xs:string" maxOccurs="unbounded">
+								<xs:complexType>
+		  						<xs:sequence>
+		   							<xs:element name="destination" type="xs:string">
+										<xs:attribute name="type" type="xs:string" use="required"/>
+										<xs:attribute name="path" type="xs:string" use="required"/>
+										<xs:attribute name="placeholder" type="xs:string"/>
+									</xs:element>
+		  						</xs:sequence>
+								<xs:attribute name="name" type="xs:string" use="required"/>
+								<xs:attribute name="primary" type="xs:boolean" />
+		 						</xs:complexType>							
+							</xs:element>
+		  				</xs:sequence>
+		 				</xs:complexType>				
+					</xs:element>
+					<xs:element name="Mainclass" type="xs:string" minOccurs="0"/>
+					<xs:element name="Arguments" minOccurs="0">
+						<xs:complexType>
+						<xs:sequence>
+							<xs:element name="Argument" maxOccurs="unbounded">
+								<xs:attribute name="name" type="xs:string" use="required"/>
+								<xs:attribute name="value" type="xs:string" use="required"/>
+							</xs:element>
+						</xs:sequence>
+						</xs:complexType>
+					</xs:element>
+  				</xs:sequence>
+				<xs:attribute name="index" type="xs:integer" use="required"/>
+ 				</xs:complexType>
+			</xs:elements>
+		</xs:sequence>
+		</xs:complexType>		
+	</xs:element>
+</xs:schema>
