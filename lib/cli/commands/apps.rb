@@ -13,7 +13,7 @@ module VMC::Cli::Command
     
     #chang by zjz
     #Store xml data
-    attr_accessor :isServcie, :cService, :args, :apptype, :requirements
+    attr_accessor :isServcie, :cService, :args, :apptype, :requirements, :Mainclass
 
     def list
       apps = client.apps
@@ -348,6 +348,7 @@ module VMC::Cli::Command
     
     #changed by zjz 2011/8/1
     #parse user's config XML
+=begin
     def parseXML(appname, path)
       framework = nil
       file = path + "/" + appname + ".xml"
@@ -410,7 +411,83 @@ module VMC::Cli::Command
       end
       framework
     end
+=end
     
+    def parseXML(appname, path)
+      framework = nil
+      file = path + "/" + "cloudfoundry.xml"
+      exist = File.exist? (file)
+      if(exist) then
+        display "Parse user's xml"
+        input = File.new(file)
+        doc = Document.new(input)
+        root = doc.root
+        doc.elements.each('*/Application') { |app|
+          index = app.attributes['index']
+          type = app.elements['Framework'].text
+          if(type)
+            framework = VMC::Cli::Framework.lookup(type)   
+          end
+          
+          @isService = app.elements['isservice'].text
+          if @isService == "true" then
+            @isService = true
+          else
+            @isService = false
+          end
+            
+          args = Hash.new(nil)
+          doc.elements.each('*/Application/Arguments/Argument') { |em|
+          key = em.attributes['name']
+            args[key] = em.attributes['value']         
+          }
+          @args = args
+            
+          cServcie = Array.new
+          doc.elements.each('*/Application/ServiceDependency/Service') { |em| 
+            type = em.attributes['type']
+            if type == "custom" then
+              cServcie << em.attributes['name']
+            end
+          }
+          @cService = cServcie
+            
+          requirements = Array.new
+          doc.elements.each('*/Application/Ports/Port'){ |em|
+            requirement = Hash.new(nil)
+            requirement['name'] = em.attributes['name']
+            requirement['primary'] = em.attributes['primary']
+            destinations = Array.new
+            dem = em.elements['destination'] 
+            destination = Hash.new(nil)
+            destination['type'] = dem.attributes['type']
+            destination['path'] = dem.attributes['path']
+            destination['placeholder'] = dem.attributes['placeholder']
+            destinations << destination            
+            requirement['destinations'] = destinations            
+            requirements << requirement          
+          }
+          @requirements = requirements
+           
+          if app.elements['Mainclass'] then
+            @Mainclass = app.elements['Mainclass'].text
+          else
+            @Mainclass = nil
+          end
+           
+          if app.elements['Framework'] then
+            @apptype = app.elements['Framework'].text
+          else
+            @apptype = nil
+          end
+        }
+        
+      else
+        display "User's xml not exist"
+      end
+      framework
+    end
+ 
     def checkCService(appname)
       err "Application '#{appname}' don't exists, please upload application '#{appname}' firstly." if !app_exists?(appname)
       app = client.app_info(appname)
@@ -548,6 +625,7 @@ module VMC::Cli::Command
         :cService => @cService,
         :args => @args,
         :apptype => @apptype,
+        @mainclass => @Mainclass,
         :requirements => @requirements
       }
       
