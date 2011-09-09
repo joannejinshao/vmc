@@ -13,7 +13,7 @@ module VMC::Cli::Command
     
     #chang by zjz
     #Store xml data
-    attr_accessor :isServcie, :cService, :args, :apptype, :requirements, :Mainclass
+    attr_accessor :isServcie, :cService, :args, :apptype, :ports, :Mainclass
 
     def list
       apps = client.apps
@@ -65,7 +65,7 @@ module VMC::Cli::Command
       app[:state] = 'STARTED'
       app[:args] = @args
       app[:apptype] = @apptype
-      app[:requirements] = @requirements
+      app[:ports] = @ports
       client.update_app(appname, app)
 
       Thread.kill(t)
@@ -423,6 +423,7 @@ module VMC::Cli::Command
         doc = Document.new(input)
         root = doc.root
         doc.elements.each('*/Application') { |app|
+          appname = app.elements['Name'].text
           index = app.attributes['index']
           type = app.elements['Framework'].text
           if(type)
@@ -451,23 +452,27 @@ module VMC::Cli::Command
             end
           }
           @cService = cServcie
-            
-          requirements = Array.new
+          
+          ports = Array.new
+          i = 0
           doc.elements.each('*/Application/Ports/Port'){ |em|
-            requirement = Hash.new(nil)
-            requirement['name'] = em.attributes['name']
-            requirement['primary'] = em.attributes['primary']
-            destinations = Array.new
-            dem = em.elements['destination'] 
+            port = Hash.new(nil)          
+            port['name'] = em.attributes['name']
+            port['index'] = i
+            if(em.attributes['primary']=="true")
+              port['primary'] = true            
+            else
+              port['primary'] = false
+            end           
             destination = Hash.new(nil)
-            destination['type'] = dem.attributes['type']
-            destination['path'] = dem.attributes['path']
-            destination['placeholder'] = dem.attributes['placeholder']
-            destinations << destination            
-            requirement['destinations'] = destinations            
-            requirements << requirement          
+            destination['type'] = em.elements['destination'].attributes['type']
+            destination['path'] =  em.elements['destination'].attributes['path']
+            destination['placeholder'] =  em.elements['destination'].attributes['placeholder']
+            port['destination'] = destination          
+            ports << port    
+            i+=1      
           }
-          @requirements = requirements
+          @ports = ports     
            
           if app.elements['Mainclass'] then
             @Mainclass = app.elements['Mainclass'].text
@@ -623,10 +628,10 @@ module VMC::Cli::Command
         },
         :isService => @isService,
         :cService => @cService,
-        :args => @args,
+        #:args => @args,
         :apptype => @apptype,
-        @mainclass => @Mainclass,
-        :requirements => @requirements
+        :mainclass => @Mainclass,
+        #:ports => @ports
       }
       
       # Send the manifest to the cloud controller
