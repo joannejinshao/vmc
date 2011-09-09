@@ -13,7 +13,7 @@ module VMC::Cli::Command
     
     #chang by zjz
     #Store xml data
-    attr_accessor :isServcie, :cService, :args, :apptype, :ports, :main_class
+    attr_accessor :isServcie, :cService, :args, :apptype, :ports, :main_class, :appname
 
     def list
       apps = client.apps
@@ -414,7 +414,7 @@ module VMC::Cli::Command
     end
 =end
     
-    def parseXML(appname, path)
+    def parseXML(path)
       framework = nil
       file = path + "/" + "cloudfoundry.xml"
       exist = File.exist? (file)
@@ -427,6 +427,7 @@ module VMC::Cli::Command
           appname = app.elements['Name'].text
           index = app.attributes['index']
           type = app.elements['Framework'].text
+          @appname = app.elements['Name'].text
           if(type)
             framework = VMC::Cli::Framework.lookup(type)   
           end
@@ -540,6 +541,12 @@ module VMC::Cli::Command
 
       path = File.expand_path(path)
       check_deploy_directory(path)
+      
+      framework = parseXML(path)      
+      @cService.each { |em|
+       checkCService(em)
+      }
+      appname = @appname
 
       appname = ask("Application Name: ") unless no_prompt || appname
       err "Application Name required." if appname.nil? || appname.empty?
@@ -550,10 +557,7 @@ module VMC::Cli::Command
       
       #chang by zjz 2011/8/1
       #parse xml      
-      framework = parseXML(appname, path)      
-      @cService.each { |em|
-       checkCService(em)
-      }
+      
       unless no_prompt || url
         url = ask("Application Deployed URL: '#{appname}.#{VMC::Cli::Config.suggest_url}'? ")
 
