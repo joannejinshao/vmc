@@ -13,7 +13,7 @@ module VMC::Cli::Command
     
     #chang by zjz
     #Store xml data
-    attr_accessor :isServcie, :cService, :args, :apptype, :ports, :Mainclass
+    attr_accessor :isServcie, :cService, :args, :apptype, :ports, :main_class
 
     def list
       apps = client.apps
@@ -66,6 +66,7 @@ module VMC::Cli::Command
       app[:args] = @args
       app[:apptype] = @apptype
       app[:ports] = @ports
+      app[:main_class] = @main_class
       client.update_app(appname, app)
 
       Thread.kill(t)
@@ -474,10 +475,12 @@ module VMC::Cli::Command
           }
           @ports = ports     
            
-          if app.elements['Mainclass'] then
-            @Mainclass = app.elements['Mainclass'].text
+          if app.elements['MainClass'] then
+            @main_class = Hash.new(nil)
+            @main_class['lib_path'] =  app.elements['MainClass'].elements['LibPath'].text
+            @main_class['main'] =  app.elements['MainClass'].elements['Main'].text        
           else
-            @Mainclass = nil
+            @main_class = nil
           end
            
           if app.elements['Framework'] then
@@ -630,7 +633,7 @@ module VMC::Cli::Command
         :cService => @cService,
         #:args => @args,
         :apptype => @apptype,
-        :mainclass => @Mainclass,
+        :main_class => @main_class,
         #:ports => @ports
       }
       
