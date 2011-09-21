@@ -52,6 +52,11 @@ class VMC::Client
     # TODO: Should merge for new version IMO, general, services, user_account
     json_get(VMC::INFO_PATH)
   end
+  
+  def group_info(name)
+    check_login_status
+    json_get("#{VMC::GROUP_PATH}/#{name}")
+  end
 
   def raw_info
     http_get(VMC::INFO_PATH)
@@ -117,6 +122,11 @@ class VMC::Client
   def delete_app(name)
     check_login_status
     http_delete("#{VMC::APPS_PATH}/#{name}")
+  end
+  
+  def delete_group(name)
+    check_login_status
+    http_delete("#{VMC::GROUP_PATH}/#{name}")
   end
 
   def app_info(name)

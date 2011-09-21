@@ -260,6 +260,14 @@ class VMC::Cli::Runner
       else
         set_cmd(:apps, :delete, 1)
       end
+      
+    when 'delete_group', 'delete-group'
+      usage('vmc delete <groupname>')
+      if @options[:all] && @args.size == 0
+        set_cmd(:apps, :delete_group)
+      else
+        set_cmd(:apps, :delete_group, 1)
+      end
 
     when 'files'
       usage('vmc files <appname> [path] [--instance N] [--all] [--prefix]')

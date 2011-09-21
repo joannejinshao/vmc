@@ -64,9 +64,11 @@ module VMC::Cli::Command
       end
 
       app[:state] = 'STARTED'
-      app[:args] = @applications[appname]['args']
-      app[:ports] = @applications[appname]['ports']
-      app[:main_class] = @applications[appname]['mainclass']
+      unless !@applications
+        app[:args] = @applications[appname]['args']
+        app[:ports] = @applications[appname]['ports']
+        app[:main_class] = @applications[appname]['mainclass']
+      end
       client.update_app(appname, app)
 
       Thread.kill(t)
@@ -227,6 +229,20 @@ module VMC::Cli::Command
         client.delete_service(s)
         display 'OK'.green
       end
+    end
+    
+    def delete_group(groupname)
+      display "Delete application group:".green
+      group = client.group_info(groupname)
+      appsequence = group[:sequence]
+      sequenceArray = appsequence.split(':')
+      sequenceArray.reverse!
+      sequenceArray.each { |em|
+        display "Delete application #{em}".green
+        delete(em)
+      }
+      client.delete_group(groupname)
+      display "OK"      
     end
 
     def all_files(appname, path)
@@ -514,6 +530,21 @@ module VMC::Cli::Command
           
           applications[appname] = application
         }
+        
+        cycleCheckHash = Hash.new(nil)
+        isCircle = false
+        dependenRecord.each { |key, value|
+          cycleCheckHash[key] = 1
+          if value
+           isCircle = checkCircleDepend(cycleCheckHash, value, dependenRecord)
+          end
+          
+          if isCircle == true
+            err "Exist cycle dependent, please check your configuration file!"
+          end
+          cycleCheckHash.clear
+        }
+        
         sequence = Hash.new(nil)
         @appsequence = ""
         dependenRecord.each { |key, value|
@@ -529,6 +560,21 @@ module VMC::Cli::Command
         err "Can not find out user's config file!"
       end
       framework
+    end
+    
+    def checkCircleDepend(cycleCheckHash, nextnode, record)
+      if(nextnode == nil) 
+        return false
+      end
+      nextnode.each { |em|
+        if cycleCheckHash[em] != nil
+          return true
+        else
+          cycleCheckHash[em] = 1
+          display cycleCheckHash
+          checkCircleDepend(cycleCheckHash, record[em], record)
+        end
+      }
     end
 
     def generateAppSequence(record,key,sequence)
