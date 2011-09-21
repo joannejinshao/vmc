@@ -430,7 +430,7 @@ module VMC::Cli::Command
         @groupname = root.attributes['name']
         
         dependenRecord = Hash.new(nil)
-        applications = Array.new
+        applications = Hash.new(nil)
         doc.elements.each('*/Application') { |app|
           appname = app.elements['Name'].text
           type = app.elements['Framework'].text
@@ -511,7 +511,7 @@ module VMC::Cli::Command
           application['args'] = args
           application['mainclass'] = main_class
           
-          applications << application
+          applications[appname] = application
         }
         sequence = Hash.new(nil)
         @appsequence = ""
@@ -522,15 +522,8 @@ module VMC::Cli::Command
         display @appsequence
         
         #Sort, generate correct push sequence
-        @applications = Array.new
-        sequenceArray.each { |sa|
-          applications.each { |em|
-            if(sa == em["name"])
-              @applications << em
-            end
-          }
-        }
-        
+        @applications = applications
+
       else
         err "Can not find out user's config file!"
       end
@@ -580,17 +573,18 @@ module VMC::Cli::Command
       parseXML(path)
       
       display 'Creating Application Group:'.green
-
+=begin
       manifest = {
         :groupname => @groupname,
         :appsequence => @appsequence,
       }
       client.create_app(@groupname, manifest)
+=end
       
-
+      sequenceArray = @appsequence.split(':')
       
-      @applications.each { |app|
-        
+      sequenceArray.each { |saname|
+        app = @applications[saname]
         dependencies = app['dependencies']
         dependencies.each_key { |key|
           checkCService(key)          
