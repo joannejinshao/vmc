@@ -8,13 +8,14 @@
   				<xs:sequence>
 	 				<xs:element name="Name" type="xs:string"/>
 					<xs:element name="Framework" type="xs:string"/>
-					<xs:element name="isservice" type="xs:boolean" default="false"/>
-					<xs:element name="ServiceDependency" minOccurs="0">
+					<xs:element name="Instances" type="xs:integer" minOccurs="0"/>
+					<xs:element name="Path" type="xs:string" minOccurs="0"/>
+					<xs:element name="Dependencies" minOccurs="0">
 		 				<xs:complexType>
 		  				<xs:sequence>
-		   					<xs:element name="Service" type="xs:string" maxOccurs="unbounded">
-								<xs:attribute name="type" type="xs:string" use="required"/>
+		   					<xs:element name="Dependency" type="xs:string" maxOccurs="unbounded">
 								<xs:attribute name="name" type="xs:string" use="required"/>
+								<xs:attribute name="cascade" type="xs:boolean" use="required"/>
 							<xs:element>
 		  				</xs:sequence>
 		 				</xs:complexType>
@@ -50,10 +51,10 @@
 						</xs:complexType>
 					</xs:element>
   				</xs:sequence>
-				<xs:attribute name="index" type="xs:integer" use="required"/>
  				</xs:complexType>
 			</xs:elements>
 		</xs:sequence>
+		<xs:attribute name="name" type="xs:string" use="required"/>
 		</xs:complexType>		
 	</xs:element>
 </xs:schema>

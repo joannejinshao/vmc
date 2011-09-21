@@ -26,6 +26,8 @@ class VMC::Cli::Runner
     opts_parser = OptionParser.new do |opts|
       opts.banner = "\nAvailable options:\n\n"
 
+      opts.on('--deploymentfile FILEPATH') { |path| @options[:filepath] = path}
+      
       opts.on('--email EMAIL')     { |email| @options[:email] = email }
       opts.on('--user EMAIL')      { |email| @options[:email] = email }
       opts.on('--passwd PASS')     { |pass|  @options[:password] = pass }
@@ -294,6 +296,13 @@ class VMC::Cli::Runner
         set_cmd(:apps, :push, 1)
       else
         set_cmd(:apps, :push, 0)
+      end
+    when 'pushgroup'
+      usage('vmc pushgroup [groupname] [--deploymentfile FILEPATH]')
+      if @args.size == 1
+        set_cmd(:apps, :pushgroup, 1)
+      else
+        set_cmd(:apps, :pushgroup, 0)
       end
 
     when 'update'

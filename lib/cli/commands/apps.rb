@@ -13,8 +13,9 @@ module VMC::Cli::Command
     
     #chang by zjz
     #Store xml data
-    attr_accessor :isServcie, :cService, :args, :apptype, :ports, :main_class, :appname
-
+    attr_accessor :groupname, :appsequence
+    attr_accessor :applications
+    
     def list
       apps = client.apps
       apps.sort! {|a, b| a[:name] <=> b[:name] }
@@ -64,7 +65,6 @@ module VMC::Cli::Command
 
       app[:state] = 'STARTED'
       app[:args] = @args
-      app[:apptype] = @apptype
       app[:ports] = @ports
       app[:main_class] = @main_class
       client.update_app(appname, app)
@@ -188,7 +188,6 @@ module VMC::Cli::Command
       app[:uris] = uris
       client.update_app(appname, app)
       display "Succesfully unmapped url".green
-
     end
 
     def delete(appname=nil)
@@ -416,94 +415,348 @@ module VMC::Cli::Command
     
     def parseXML(path)
       framework = nil
-      file = path + "/" + "cloudfoundry.xml"
-      exist = File.exist? (file)
+      file = nil
+      if Dir.exist? (path)
+        file = path + "/" + "cloudfoundry.xml"
+      else
+        file = path
+      end
+      exist = File.exist? (file) 
       if(exist) then
         display "Parse user's xml"
         input = File.new(file)
         doc = Document.new(input)
         root = doc.root
+        @groupname = root.attributes['name']
+        
+        dependenRecord = Hash.new(nil)
+        applications = Array.new
         doc.elements.each('*/Application') { |app|
           appname = app.elements['Name'].text
-          index = app.attributes['index']
           type = app.elements['Framework'].text
-          @appname = app.elements['Name'].text
+          instances = app.elements['Instances'].text.to_i
+          apppath = app.elements['Path']
+          if(apppath == nil)
+            apppath = '.'
+          else
+            apppath = app.elements['Path'].text
+          end
           if(type)
             framework = VMC::Cli::Framework.lookup(type)   
           end
           
-          @isService = app.elements['isservice'].text
-          if @isService == "true" then
-            @isService = true
-          else
-            @isService = false
+          args = Hash.new(nil)
+          if(app.elements['Arguments'] != nil)
+            app.elements['Arguments'].each_element { |em|
+              key = em.attributes['name']
+              args[key] = em.attributes['value']         
+            }
           end
             
-          args = Hash.new(nil)
-          doc.elements.each('*/Application/Arguments/Argument') { |em|
-          key = em.attributes['name']
-            args[key] = em.attributes['value']         
-          }
-          @args = args
-            
-          cServcie = Array.new
-          doc.elements.each('*/Application/ServiceDependency/Service') { |em| 
-            type = em.attributes['type']
-            if type == "custom" then
-              cServcie << em.attributes['name']
-            end
-          }
-          @cService = cServcie
+          dependencies = Hash.new(nil)
+          tempArray = Array.new
+          if(app.elements['Dependencies'] != nil) 
+            app.elements['Dependencies'].each_element { |em|
+              name = em.attributes['name']
+              tempArray << name
+              cascade = em.attributes["cascade"]
+              if(cascade == "true")
+                dependencies[name] = true
+              elsif(cascade == "false")
+                dependencies[name] = false
+              else
+                dependencies[name] = false
+              end
+            }
+          end
+          dependenRecord[appname] = tempArray
           
           ports = Array.new
           i = 0
-          doc.elements.each('*/Application/Ports/Port'){ |em|
-            port = Hash.new(nil)          
-            port['name'] = em.attributes['name']
-            port['index'] = i
-            if(em.attributes['primary']=="true")
-              port['primary'] = true            
-            else
-              port['primary'] = false
-            end           
-            destination = Hash.new(nil)
-            destination['type'] = em.elements['destination'].attributes['type']
-            destination['path'] =  em.elements['destination'].attributes['path']
-            destination['placeholder'] =  em.elements['destination'].attributes['placeholder']
-            port['destination'] = destination          
-            ports << port    
-            i+=1      
-          }
-          @ports = ports     
-           
+          if(app.elements['Ports'] != nil)
+            app.elements['Ports'].each_element { |em|
+              port = Hash.new(nil)          
+              port['name'] = em.attributes['name']
+              port['index'] = i
+              if(em.attributes['primary']=="true")
+                port['primary'] = true            
+              else
+                port['primary'] = false
+              end           
+              destination = Hash.new(nil)
+              destination['type'] = em.elements['destination'].attributes['type']
+              destination['path'] =  em.elements['destination'].attributes['path']
+              destination['placeholder'] =  em.elements['destination'].attributes['placeholder']
+              port['destination'] = destination          
+              ports << port    
+              i+=1      
+            }  
+          end
+            
+          main_class = Hash.new(nil)
           if app.elements['MainClass'] then
-            @main_class = Hash.new(nil)
-            @main_class['lib_path'] =  app.elements['MainClass'].elements['LibPath'].text
-            @main_class['main'] =  app.elements['MainClass'].elements['Main'].text        
+            main_class['lib_path'] =  app.elements['MainClass'].elements['LibPath'].text
+            main_class['main'] =  app.elements['MainClass'].elements['Main'].text        
           else
-            @main_class = nil
+            main_class = nil
           end
-           
-          if app.elements['Framework'] then
-            @apptype = app.elements['Framework'].text
-          else
-            @apptype = nil
-          end
+          
+          application = Hash.new
+          application['name'] = appname
+          application['framework'] = framework
+          application['instances'] = instances
+          application['path'] = apppath
+          application['dependencies'] = dependencies
+          application['ports'] = ports
+          application['args'] = args
+          application['mainclass'] = main_class
+          
+          applications << application
+        }
+        sequence = Hash.new(nil)
+        @appsequence = ""
+        dependenRecord.each { |key, value|
+          generateAppSequence(dependenRecord, key, sequence)
+        }
+        sequenceArray = @appsequence.split(':')
+        display @appsequence
+        
+        #Sort, generate correct push sequence
+        @applications = Array.new
+        sequenceArray.each { |sa|
+          applications.each { |em|
+            if(sa == em["name"])
+              @applications << em
+            end
+          }
         }
         
       else
-        display "User's xml not exist"
+        err "Can not find out user's config file!"
       end
       framework
     end
+
+    def generateAppSequence(record,key,sequence)
+      value = record[key]
+      if(value == nil)
+        if(!sequence.has_key?(key))
+          sequence[key] = nil 
+          @appsequence += key
+          @appsequence += ":"
+        end
+      else
+        bExist = true
+        value.each{ |em|
+          if(!sequence.has_key?(em))
+            bExist = false
+          end
+        }
+        if(bExist) 
+          if(!sequence.has_key?(key))
+            sequence[key] = nil
+            @appsequence += key
+            @appsequence += ":" 
+          end
+        else
+          value.each { |em|
+            generateAppSequence(record,em,sequence)
+          }
+          if(!sequence.has_key?(key))
+            sequence[key] = nil 
+            @appsequence += key
+            @appsequence += ":"
+          end
+        end
+      end
+    end
+ 
+    def pushgroup
+      path = @options[:filepath]
+      if path == nil
+        path = '.'
+      end
+      
+      parseXML(path)
+      
+      display 'Creating Application Group:'.green
+=begin
+      manifest = {
+        :groupname => @groupname,
+        :appsequence => @appsequence,
+      }
+      client.create_app(@groupname, manifest)
+      display 'OK'.green
+=end
+      
+      @applications.each { |app|
+        
+        dependencies = app['dependencies']
+        dependencies.each_key { |key|
+          checkCService(key)          
+        }
+        
+         instances = app["instances"] || 1
+         appname = app["name"]
+         display "Deploy application #{appname} :".green
+        # Check app existing upfront if we have appname
+         app_checked = false
+         if appname
+           err "Application '#{appname}' already exists, use update" if app_exists?(appname)
+           app_checked = true
+         else
+           raise VMC::Client::AuthError unless client.logged_in?
+         end
+
+         # check if we have hit our app limit
+         check_app_limit
+
+         path = app["path"]
+         path = File.expand_path(path)
+         check_deploy_directory(path)
+
+         appname = ask("Application Name: ") unless no_prompt || appname
+           err "Application Name required." if appname.nil? || appname.empty?
+
+         unless app_checked
+           err "Application '#{appname}' already exists, use update or delete." if app_exists?(appname)
+         end    
+      
+        no_prompt = nil
+        url = nil
+        unless no_prompt || url
+          url = ask("Application Deployed URL: '#{appname}.#{VMC::Cli::Config.suggest_url}'? ")
+  
+          # common error case is for prompted users to answer y or Y or yes or YES to this ask() resulting in an
+          # unintended URL of y. Special case this common error
+          if YES_SET.member?(url)
+            #silently revert to the stock url
+            url = "#{appname}.#{VMC::Cli::Config.suggest_url}"
+          end
+        end
+  
+        url = "#{appname}.#{VMC::Cli::Config.suggest_url}" if url.nil? || url.empty?
+
+        # Detect the appropriate framework.
+        ignore_framework = false
+        framework = app["framework"]
+        unless framework
+          framework = VMC::Cli::Framework.detect(path)
+          framework_correct = ask("Detected a #{framework}, is this correct? [Yn]: ") if prompt_ok && framework
+          framework_correct ||= 'y'
+          if prompt_ok && (framework.nil? || framework_correct.upcase == 'N')
+            display "#{"[WARNING]".yellow} Can't determine the Application Type." unless framework
+            framework = nil if framework_correct.upcase == 'N'
+            choose do |menu|
+              menu.layout = :one_line
+              menu.prompt = "Select Application Type: "
+              menu.default = framework
+              VMC::Cli::Framework.known_frameworks.each do |f|
+                menu.choice(f) { framework = VMC::Cli::Framework.lookup(f) }
+              end
+            end
+            display "Selected #{framework}"
+          end
+          # Framework override, deprecated
+          exec = framework.exec if framework && framework.exec
+          else 
+            unless framework
+              framework = VMC::Cli::Framework.new
+            end
+        end
+
+        err "Application Type undetermined for path '#{path}'" unless framework
+        memswitch = nil
+        unless memswitch
+          mem = framework.memory
+          if prompt_ok
+            choose do |menu|
+              menu.layout = :one_line
+              menu.prompt = "Memory Reservation [Default:#{mem}] "
+              menu.default = mem
+              mem_choices.each { |choice| menu.choice(choice) {  mem = choice } }
+            end
+          end
+        else
+          mem = memswitch
+        end
+
+        # Set to MB number
+        mem_quota = mem_choice_to_quota(mem)
+
+        # check memsize here for capacity
+        no_start = nil
+        check_has_capacity_for(mem_quota * instances) unless no_start
+
+        display 'Creating Application : ', false
+
+        manifest = {
+        :name => app["name"],
+        :staging => {
+           :framework => framework.name,
+        },
+        :uris => [url],
+        :instances => app["instances"],
+        :resources => {
+          :memory => mem_quota
+          
+        },
+        :dependencies => app["dependencies"],
+        :ports => app["ports"],
+        :args => app["args"],
+        :mainclass => app["mainclass"],
+      }
+      
+      # Send the manifest to the cloud controller
+      client.create_app(appname, manifest)
+      display 'OK'.green
+
+      # Services check
+      unless no_prompt || @options[:noservices]
+        services = client.services_info
+        unless services.empty?
+          proceed = ask("Would you like to bind any services to '#{appname}'? [yN]: ")
+          bind_services(appname, services) if proceed.upcase == 'Y'
+        end
+      end
+
+      # Stage and upload the app bits.
+      upload_app_bits(appname, path)
+
+      start(appname, true) unless no_start
+        
+=begin
+        manifest = {
+        :name => app[:name],
+        :staging => {
+           :framework => app[:framework],
+           :runtime => @options[:runtime]
+        },
+        :uris => [url],
+        :instances => instances,
+        :resources => {
+          :memory => mem_quota
+          
+        },
+        :instances => app[:instances],
+        :dependencies = app[:dependencies],
+        :ports = app[:ports],
+        :args = app[:args],
+        :mainclass = app[:mainclass],
+      }
+=end      
+      }
+        
+    end
  
     def checkCService(appname)
-      err "Application '#{appname}' don't exists, please upload application '#{appname}' firstly." if !app_exists?(appname)
+      err "Application '#{appname}' don't exists, please upload application '#{appname}' first." if !app_exists?(appname)
       app = client.app_info(appname)
       err "Application '#{appname}' has not started, please run application '#{appname}' first." if app[:state] == 'STOPPED'
     end
     
     def push(appname=nil)
+      
       instances = @options[:instances] || 1
       exec = @options[:exec] || 'thin start'
       ignore_framework = @options[:noframework]
@@ -541,13 +794,14 @@ module VMC::Cli::Command
 
       path = File.expand_path(path)
       check_deploy_directory(path)
-      
+
+=begin
       framework = parseXML(path)      
       @cService.each { |em|
        checkCService(em)
       }
       appname = @appname
-
+=end
       appname = ask("Application Name: ") unless no_prompt || appname
       err "Application Name required." if appname.nil? || appname.empty?
 

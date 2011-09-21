@@ -18,5 +18,6 @@ module VMC
   SERVICES_PATH        = '/services'
   USERS_PATH           = '/users'
   CUSTOM_SERVICES_PATH = '/custom_services'
+  GROUP_PATH           = '/groups'
 
 end

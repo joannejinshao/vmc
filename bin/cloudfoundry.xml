@@ -1,16 +1,29 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<Applications
+<Applications name="CFTest"
 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 xsi:noNamespaceSchemaLocation="cf.xsd">
 
-	<Application index="1">
+	<Application>
+		<Name>key</Name>
+		<Framework>Java</Framework>
+		<Instances>1</Instances>
+		<Path>/home/zjz/cloudfoundry/vmc/bin</Path>
+		<Ports>		
+			<Port name="port" primary="true">
+				<destination type="cmd" />				
+			</Port>
+		</Ports>
+	</Application>
+
+	<Application>
 		<Name>history</Name>
 		<Framework>Java</Framework>
-		<isservice>true</isservice>
-		<ServiceDependency>
-			<Service type="custom" name="key"></Service>		
-		</ServiceDependency>
+		<Instances>1</Instances>
+		<Path>/home/zjz/cloudfoundry/vmc/bin</Path>
+		<Dependencies>
+			<Dependency name="key" cascade="true"></Dependency>	
+		</Dependencies>
 		<Ports>		
 			<Port name="port" primary="true">
 				<destination type="cmd" />				
@@ -25,16 +38,19 @@ xsi:noNamespaceSchemaLocation="cf.xsd">
 		</MainClass>
 	</Application>
 
-	<!--
-	<Application index="1">
-		<Name>key</Name>
-		<Framework>Java</Framework>
-		<isservice>true</isservice>		
-		<Ports>		
-			<Port name="port" primary="true">
-				<destination type="cmd" />				
-			</Port>							
-		</Ports>
+	
+
+	<Application>
+		<Name>test</Name>
+		<Framework>Spring</Framework>
+		<Instances>1</Instances>
+		<Path>/home/zjz/cloudfoundry/vmc/bin</Path>
+		<Dependencies>
+			<Dependency name="key" cascade="true"></Dependency>
+			<Dependency name="history" cascade="true"></Dependency>		
+		</Dependencies>
 	</Application>
--->
+
+	
+
 </Applications>

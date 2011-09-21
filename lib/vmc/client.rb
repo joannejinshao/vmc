@@ -84,6 +84,13 @@ class VMC::Client
     app[:instances] ||= 1
     json_post(VMC::APPS_PATH, app)
   end
+  
+  def create_group(name, manifest={})
+    check_login_status
+    group = mainfest.dup
+    group[:groupname] = name
+    json_post(VMC::GROUP_PATH, group)
+  end
 
   def update_app(name, manifest)
     check_login_status
