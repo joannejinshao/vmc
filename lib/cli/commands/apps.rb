@@ -580,14 +580,14 @@ module VMC::Cli::Command
       parseXML(path)
       
       display 'Creating Application Group:'.green
-=begin
+
       manifest = {
         :groupname => @groupname,
         :appsequence => @appsequence,
       }
       client.create_app(@groupname, manifest)
-      display 'OK'.green
-=end
+      
+
       
       @applications.each { |app|
         
