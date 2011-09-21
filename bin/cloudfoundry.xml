@@ -8,7 +8,7 @@ xsi:noNamespaceSchemaLocation="cf.xsd">
 		<Name>key</Name>
 		<Framework>Java</Framework>
 		<Instances>1</Instances>
-		<Path>/home/zjz/cloudfoundry/vmc/bin</Path>
+		<Path>~/cloudfoundry/vmc/bin</Path>
 		<Ports>		
 			<Port name="port" primary="true">
 				<destination type="cmd" />				
@@ -20,7 +20,7 @@ xsi:noNamespaceSchemaLocation="cf.xsd">
 		<Name>history</Name>
 		<Framework>Java</Framework>
 		<Instances>1</Instances>
-		<Path>/home/zjz/cloudfoundry/vmc/bin</Path>
+		<Path>~/cloudfoundry/vmc/bin</Path>
 		<Dependencies>
 			<Dependency name="key" cascade="true"></Dependency>	
 		</Dependencies>
@@ -44,7 +44,7 @@ xsi:noNamespaceSchemaLocation="cf.xsd">
 		<Name>test</Name>
 		<Framework>Spring</Framework>
 		<Instances>1</Instances>
-		<Path>/home/zjz/cloudfoundry/vmc/bin</Path>
+		<Path>~/cloudfoundry/vmc/bin</Path>
 		<Dependencies>
 			<Dependency name="key" cascade="true"></Dependency>
 			<Dependency name="history" cascade="true"></Dependency>		

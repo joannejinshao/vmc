@@ -64,9 +64,9 @@ module VMC::Cli::Command
       end
 
       app[:state] = 'STARTED'
-      app[:args] = @args
-      app[:ports] = @ports
-      app[:main_class] = @main_class
+      app[:args] = @applications[appname]['args']
+      app[:ports] = @applications[appname]['ports']
+      app[:main_class] = @applications[appname]['mainclass']
       client.update_app(appname, app)
 
       Thread.kill(t)
@@ -510,6 +510,7 @@ module VMC::Cli::Command
           application['ports'] = ports
           application['args'] = args
           application['mainclass'] = main_class
+          application['groupName'] = @groupname
           
           applications[appname] = application
         }
@@ -573,13 +574,13 @@ module VMC::Cli::Command
       parseXML(path)
       
       display 'Creating Application Group:'.green
-=begin
+
       manifest = {
         :groupname => @groupname,
         :appsequence => @appsequence,
       }
-      client.create_app(@groupname, manifest)
-=end
+      client.create_group(@groupname, manifest)
+
       
       sequenceArray = @appsequence.split(':')
       
@@ -606,6 +607,7 @@ module VMC::Cli::Command
          check_app_limit
 
          path = app["path"]
+         display path
          path = File.expand_path(path)
          check_deploy_directory(path)
 
@@ -695,10 +697,10 @@ module VMC::Cli::Command
           :memory => mem_quota
           
         },
-        :dependencies => app["dependencies"],
-        :ports => app["ports"],
+        :dependencies => app["dependencies"],        
         :args => app["args"],
         :mainclass => app["mainclass"],
+        :groupName => app["groupName"]
       }
       
       # Send the manifest to the cloud controller

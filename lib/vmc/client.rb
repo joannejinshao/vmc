@@ -87,7 +87,7 @@ class VMC::Client
   
   def create_group(name, manifest={})
     check_login_status
-    group = mainfest.dup
+    group = manifest.dup
     group[:groupname] = name
     json_post(VMC::GROUP_PATH, group)
   end
