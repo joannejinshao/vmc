@@ -157,6 +157,16 @@ class VMC::Client
     check_login_status
     json_get("#{VMC::APPS_PATH}/#{name}/instances")
   end
+  
+  def get_sequence(name)
+    check_login_status
+    json_get("#{VMC::APPS_PATH}/#{name}/sequence")
+  end
+  
+  def start_sequence(name)
+    check_login_status
+    json_get("#{VMC::APPS_PATH}/#{name}/start_sequence")
+  end
 
   def app_crashes(name)
     check_login_status
@@ -348,7 +358,6 @@ class VMC::Client
 
   def json_put(url, payload)
     http_put(url, payload.to_json, 'application/json')
-    puts "#{payload}" 
   end
 
   def json_parse(str)

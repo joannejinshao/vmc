@@ -27,6 +27,7 @@ class VMC::Cli::Runner
       opts.banner = "\nAvailable options:\n\n"
 
       opts.on('--deploymentfile FILEPATH') { |path| @options[:filepath] = path}
+      opts.on('--grouppath GROUPPATH') { |path| @options[:grouppath] = path}
       
       opts.on('--email EMAIL')     { |email| @options[:email] = email }
       opts.on('--user EMAIL')      { |email| @options[:email] = email }
@@ -220,14 +221,26 @@ class VMC::Cli::Runner
     when 'start'
       usage('vmc start <appname>')
       set_cmd(:apps, :start, 1)
+     
+    when 'groupstart'
+      usage('vmc groupstart <groupname>')
+      set_cmd(:apps, :groupstart, 1)
 
     when 'stop'
       usage('vmc stop <appname>')
       set_cmd(:apps, :stop, 1)
+      
+    when 'groupstop'
+      usage('vmc groupstop <groupname>')
+      set_cmd(:apps, :groupstop, 1)
 
     when 'restart'
       usage('vmc restart <appname>')
       set_cmd(:apps, :restart, 1)
+      
+    when 'grouprestart'
+      usage('vmc restart <groupname>')
+      set_cmd(:apps, :grouprestart, 1)
 
     when 'rename'
       usage('vmc rename <appname> <newname>')
@@ -261,12 +274,12 @@ class VMC::Cli::Runner
         set_cmd(:apps, :delete, 1)
       end
       
-    when 'delete_group', 'delete-group'
-      usage('vmc delete <groupname>')
+    when 'groupdelete', 'delete-group'
+      usage('vmc groupdelete <groupname>')
       if @options[:all] && @args.size == 0
-        set_cmd(:apps, :delete_group)
+        set_cmd(:apps, :groupdelete)
       else
-        set_cmd(:apps, :delete_group, 1)
+        set_cmd(:apps, :groupdelete, 1)
       end
 
     when 'files'
@@ -305,17 +318,21 @@ class VMC::Cli::Runner
       else
         set_cmd(:apps, :push, 0)
       end
-    when 'pushgroup'
-      usage('vmc pushgroup [groupname] [--deploymentfile FILEPATH]')
+    when 'grouppush'
+      usage('vmc grouppush [groupname] [--deploymentfile FILEPATH]')
       if @args.size == 1
-        set_cmd(:apps, :pushgroup, 1)
+        set_cmd(:apps, :grouppush, 1)
       else
-        set_cmd(:apps, :pushgroup, 0)
+        set_cmd(:apps, :grouppush, 0)
       end
 
     when 'update'
       usage('vmc update <appname> [--path PATH]')
       set_cmd(:apps, :update, 1)
+      
+    when 'groupupdate'
+      usage('vmc groupupdate <groupname> [--grouppath GROUPPATH]')
+      set_cmd(:apps, :groupupdate, 1)
 
     when 'services'
       usage('vmc services')

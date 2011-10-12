@@ -46,6 +46,18 @@ module VMC::Cli::Command
     YES_SET = Set.new(["y", "Y", "yes", "YES"])
 
     def start(appname, push = false)
+      sequence = client.start_sequence(appname)
+      if sequence
+        sequence[:start_sequence].each { |em|
+          display "Start application #{em}".green
+          start_app(em, push)
+        }
+      else
+        start app(em, push)
+      end
+    end
+    
+    def start_app(appname, push = false)
       app = client.app_info(appname)
 
       return display "Application '#{appname}' could not be found".red if app.nil?
@@ -64,7 +76,7 @@ module VMC::Cli::Command
       end
 
       app[:state] = 'STARTED'
-      unless !@applications
+      if @applications
         app[:args] = @applications[appname]['args']
         app[:ports] = @applications[appname]['ports']
         app[:main_class] = @applications[appname]['mainclass']
@@ -116,17 +128,75 @@ module VMC::Cli::Command
     end
 
     def stop(appname)
-      app = client.app_info(appname)
-      return display "Application '#{appname}' already stopped".yellow if app[:state] == 'STOPPED'
-      display 'Stopping Application: ', false
-      app[:state] = 'STOPPED'
-      client.update_app(appname, app)
-      display 'OK'.green
+      sequence = client.get_sequence(appname)
+      if sequence
+        sequence[:sequence].each { |em|
+          stop_app(em)
+        }
+      else
+        stop_app(appname)
+      end
+    end
+    
+    def stop_app(appname)
+        app = client.app_info(appname)
+        return display "Application '#{appname}' already stopped".yellow if app[:state] == 'STOPPED'
+        display "Stopping Application '#{appname}': ", false
+        app[:state] = 'STOPPED'
+        client.update_app(appname, app)
+        display 'OK'.green     
+    end
+    
+    def groupstop(groupname)
+      display "Stop application group '#{groupname}' :".green
+      group = client.group_info(groupname)
+      appsequence = group[:sequence]
+      sequenceArray = appsequence.split(':')
+      sequenceArray.reverse!
+      sequenceArray.each { |em|
+        display "Stop application '#{em}'".green
+        stop_app(em)
+      }
+      display "OK".green  
+    end
+    
+    def groupstart(groupname)
+      display "Start application group '#{groupname}' :".green
+      group = client.group_info(groupname)
+      appsequence = group[:sequence]
+      sequenceArray = appsequence.split(':')
+      sequenceArray.each { |em|
+        display "Start application '#{em}'".green
+        start_app(em)
+      }
+      display "OK".green  
+    end
+    
+    def grouprestart(groupname)
+      display "Restart application group '#{groupname}' :".green
+      group = client.group_info(groupname)
+      appsequence = group[:sequence]
+      sequenceArray = appsequence.split(':')
+      sequenceArray.each { |em|
+        display "Restart application '#{em}'".green
+        stop_app(em)
+        start_app(em)
+      }
+      display "OK".green
     end
 
     def restart(appname)
-      stop(appname)
-      start(appname)
+      sequence = client.get_sequence(appname)
+      if sequence
+        sequence[:sequence].each { |em|
+          display "Restart application #{em}".green
+          stop_app(em)
+          start_app(em)
+        }
+      else
+        stop_app(appname)
+        start_app(appname)
+      end
     end
 
     def rename(appname, newname)
@@ -193,19 +263,26 @@ module VMC::Cli::Command
     end
 
     def delete(appname=nil)
-      force = @options[:force]
-      if @options[:all]
-        should_delete = force && no_prompt ? 'Y' : 'N'
-        unless no_prompt || force
-          should_delete = ask 'Delete ALL Applications and Services? (y/N)? '
-        end
-        if should_delete.upcase == 'Y'
-          apps = client.apps
-          apps.each { |app| delete_app(app[:name], force) }
-        end
-      else
-        err 'No valid appname given' unless appname
-        delete_app(appname, force)
+      sequence = client.get_sequence(appname)
+      display sequence
+      if sequence
+        sequence[:sequence].reverse!
+        sequence[:sequence].each { |em|
+          force = @options[:force]
+          if @options[:all]
+            should_delete = force && no_prompt ? 'Y' : 'N'
+            unless no_prompt || force
+              should_delete = ask 'Delete ALL Applications and Services? (y/N)? '
+            end
+            if should_delete.upcase == 'Y'
+              apps = client.apps
+              apps.each { |app| delete_app(app[:name], force) }
+            end
+          else
+            err 'No valid appname given' unless em
+            delete_app(em, force)
+          end
+        }
       end
     end
 
@@ -231,7 +308,7 @@ module VMC::Cli::Command
       end
     end
     
-    def delete_group(groupname)
+    def groupdelete(groupname)
       display "Delete application group:".green
       group = client.group_info(groupname)
       appsequence = group[:sequence]
@@ -352,14 +429,38 @@ module VMC::Cli::Command
       end
     end
 
-    def update(appname)
+    def update(appname, grouppath = nil)
       app = client.app_info(appname)
       if @options[:canary]
         display "[--canary] is deprecated and will be removed in a future version".yellow
       end
       path = @options[:path] || '.'
+      
+      if(grouppath)
+        path = grouppath
+      end
       upload_app_bits(appname, path)
+      display "app[:state]".green + app[:state]
       restart appname if app[:state] == 'STARTED'
+    end
+    
+    def groupupdate(groupname)
+      display "Update application group '#{groupname}' :".green
+      group = client.group_info(groupname)
+      appsequence = group[:sequence]
+      sequenceArray = appsequence.split(':')
+      path = @options[:grouppath] || '.'
+      
+      parseXML(path)
+      
+      sequenceArray.each { |em|
+        grouppath = @applications[em]['path']
+        grouppath = File.expand_path(grouppath)
+        check_deploy_directory(grouppath)
+        display "Update application '#{em}'".green
+        update(em, grouppath)
+      }
+      display "OK" 
     end
     
     #changed by zjz 2011/8/1
@@ -551,7 +652,6 @@ module VMC::Cli::Command
           generateAppSequence(dependenRecord, key, sequence)
         }
         sequenceArray = @appsequence.split(':')
-        display @appsequence
         
         #Sort, generate correct push sequence
         @applications = applications
@@ -571,7 +671,6 @@ module VMC::Cli::Command
           return true
         else
           cycleCheckHash[em] = 1
-          display cycleCheckHash
           checkCircleDepend(cycleCheckHash, record[em], record)
         end
       }
@@ -611,7 +710,7 @@ module VMC::Cli::Command
       end
     end
  
-    def pushgroup
+    def grouppush
       path = @options[:filepath]
       if path == nil
         path = '.'
@@ -653,7 +752,6 @@ module VMC::Cli::Command
          check_app_limit
 
          path = app["path"]
-         display path
          path = File.expand_path(path)
          check_deploy_directory(path)
 
@@ -765,7 +863,7 @@ module VMC::Cli::Command
       # Stage and upload the app bits.
       upload_app_bits(appname, path)
 
-      start(appname, true) unless no_start
+      start_app(appname, true) unless no_start
         
 =begin
         manifest = {
@@ -953,7 +1051,7 @@ module VMC::Cli::Command
       # Stage and upload the app bits.
       upload_app_bits(appname, path)
 
-      start(appname, true) unless no_start
+      start_app(appname, true) unless no_start
     end
 
     def environment(appname)
