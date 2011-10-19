@@ -53,6 +53,11 @@ class VMC::Client
     json_get(VMC::INFO_PATH)
   end
   
+  def groups
+    check_login_status
+    json_get("#{VMC::GROUP_PATH}")
+  end
+  
   def group_info(name)
     check_login_status
     json_get("#{VMC::GROUP_PATH}/#{name}")
@@ -127,6 +132,11 @@ class VMC::Client
   def delete_group(name)
     check_login_status
     http_delete("#{VMC::GROUP_PATH}/#{name}")
+  end
+  
+  def group_remove(groupname, appname)
+    check_login_status
+    http_get("#{VMC::GROUP_PATH}/#{groupname}/#{appname}")
   end
 
   def app_info(name)
