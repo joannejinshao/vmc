@@ -213,6 +213,10 @@ class VMC::Cli::Runner
     when 'apps'
       usage('vmc apps')
       set_cmd(:apps, :apps)
+      
+    when 'groups'
+      usage('vmc groups')
+      set_cmd(:apps, :apps)
 
     when 'list'
       usage('vmc list')

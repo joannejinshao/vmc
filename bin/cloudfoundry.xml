@@ -5,10 +5,20 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 xsi:noNamespaceSchemaLocation="cf.xsd">
 
 	<Application>
+		<Name>key</Name>
+		<Framework>Java</Framework>
+		<Instances>1</Instances>
+		<Ports>		
+			<Port name="port" primary="true">
+				<destination type="cmd" />				
+			</Port>
+		</Ports>
+	</Application>
+
+	<Application>
 		<Name>history</Name>
 		<Framework>Java</Framework>
 		<Instances>1</Instances>
-		<Path>~/cloudfoundry/vmc/bin</Path>
 		<Dependencies>
 			<Dependency name="key" cascade="true"></Dependency>	
 		</Dependencies>
@@ -32,23 +42,12 @@ xsi:noNamespaceSchemaLocation="cf.xsd">
 		<Name>test</Name>
 		<Framework>Spring</Framework>
 		<Instances>1</Instances>
-		<Path>~/cloudfoundry/vmc/bin</Path>
 		<Dependencies>
 			<Dependency name="key" cascade="true"></Dependency>
-			<Dependency name="history" cascade="true"></Dependency>
+			<Dependency name="history" cascade="true"></Dependency>		
 		</Dependencies>
 	</Application>
 
-	<Application>
-		<Name>key</Name>
-		<Framework>Java</Framework>
-		<Instances>1</Instances>
-		<Path>~/cloudfoundry/vmc/bin</Path>
-		<Ports>		
-			<Port name="port" primary="true">
-				<destination type="cmd" />				
-			</Port>
-		</Ports>
-	</Application>
+	
 
 </Applications>

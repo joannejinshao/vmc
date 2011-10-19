@@ -49,11 +49,16 @@ module VMC::Cli::Command
       sequence = client.start_sequence(appname)
       if sequence
         sequence[:start_sequence].each { |em|
-          display "Start application #{em}".green
-          start_app(em, push)
+          app = client.app_info(em)
+          if app[:state] == 'STARTED'
+            display "Application #{em} already started".yellow
+          else
+            display "Start application #{em}".green
+            start_app(em, push)
+          end
         }
       else
-        start app(em, push)
+        start app(appname, push)
       end
     end
     
@@ -423,13 +428,41 @@ module VMC::Cli::Command
       end
       display "\n"
       if stats.empty?
-        display "No running instances for [#{appname}]".yellow
+        display "No runni
+      if(grouppath)ng instances for [#{appname}]".yellow
       else
         display stats_table
       end
     end
 
     def update(appname, grouppath = nil)
+      sequence = client.get_sequence(appname)
+      path = @options[:grouppath] || '.'
+      parseXML(path)
+      if sequence
+        sequence[:sequence].each { |em|
+          app = client.app_info(em)
+          if em == appname
+            grouppath = @applications[em]['path']
+            grouppath = File.expand_path(grouppath)
+            check_deploy_directory(grouppath)
+            display "Update application '#{em}'".green
+            update_app(appname, grouppath)
+          else
+            stop_app em if app[:state] == 'STARTED'
+            start_app em
+          end
+        }
+      else
+        grouppath = @applications[appname]['path']
+        grouppath = File.expand_path(grouppath)
+        check_deploy_directory(grouppath)
+        display "Update application '#{appname}'".green
+        update_app(appname, grouppath)
+      end
+    end
+    
+    def update_app(appname, grouppath = nil)
       app = client.app_info(appname)
       if @options[:canary]
         display "[--canary] is deprecated and will be removed in a future version".yellow
@@ -441,7 +474,8 @@ module VMC::Cli::Command
       end
       upload_app_bits(appname, path)
       display "app[:state]".green + app[:state]
-      restart appname if app[:state] == 'STARTED'
+      stop_app appname if app[:state] == 'STARTED'
+      start_app appname
     end
     
     def groupupdate(groupname)
@@ -458,7 +492,7 @@ module VMC::Cli::Command
         grouppath = File.expand_path(grouppath)
         check_deploy_directory(grouppath)
         display "Update application '#{em}'".green
-        update(em, grouppath)
+        update_app(em, grouppath)
       }
       display "OK" 
     end
@@ -630,6 +664,8 @@ module VMC::Cli::Command
           application['groupName'] = @groupname
           
           applications[appname] = application
+          
+          framework
         }
         
         cycleCheckHash = Hash.new(nil)
@@ -935,22 +971,14 @@ module VMC::Cli::Command
       path = File.expand_path(path)
       check_deploy_directory(path)
 
-=begin
       framework = parseXML(path)      
-      @cService.each { |em|
-       checkCService(em)
-      }
-      appname = @appname
-=end
+      
       appname = ask("Application Name: ") unless no_prompt || appname
       err "Application Name required." if appname.nil? || appname.empty?
 
       unless app_checked
         err "Application '#{appname}' already exists, use update or delete." if app_exists?(appname)
-      end
-      
-      #chang by zjz 2011/8/1
-      #parse xml      
+      end   
       
       unless no_prompt || url
         url = ask("Application Deployed URL: '#{appname}.#{VMC::Cli::Config.suggest_url}'? ")
@@ -1015,6 +1043,7 @@ module VMC::Cli::Command
 
       display 'Creating Application: ', false
 
+      display @applications
       manifest = {
         :name => "#{appname}",
         :staging => {
@@ -1027,13 +1056,18 @@ module VMC::Cli::Command
           :memory => mem_quota
           
         },
-        :isService => @isService,
-        :cService => @cService,
+        
+        :dependencies => @applications[appname]["dependencies"],        
+        :args => @applications[appname]["args"],
+        :mainclass => @applications[appname]["mainclass"]
+        #:isService => @isService,
+        #:cService => @cService,
         #:args => @args,
-        :apptype => @apptype,
-        :main_class => @main_class,
+        #:apptype => @apptype,
+        #:main_class => @main_class,
         #:ports => @ports
       }
+      
       
       # Send the manifest to the cloud controller
       client.create_app(appname, manifest)
