@@ -793,7 +793,7 @@ module VMC::Cli::Command
       
       sequenceArray.each { |saname|
         app = @applications[saname]
-        display @applications
+        # display @applications
         dependencies = app['dependencies']
         dependencies.each_key { |key|
           checkCService(key)          

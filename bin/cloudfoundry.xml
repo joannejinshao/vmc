@@ -3,8 +3,8 @@
 <Applications name="CFTest"
 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 xsi:noNamespaceSchemaLocation="cf.xsd">
-		<!--
-		<Application>
+		
+	<Application>
 		<Name>key</Name>
 		<Framework>Java</Framework>
 		<Instances>1</Instances>
@@ -35,8 +35,6 @@ xsi:noNamespaceSchemaLocation="cf.xsd">
 			<Main>com.vmware.util.ContactHistory</Main>
 		</MainClass>
 	</Application>
-
-	-->
 
 	<Application>
 		<Name>test</Name>
