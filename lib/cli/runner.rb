@@ -329,6 +329,14 @@ class VMC::Cli::Runner
       else
         set_cmd(:apps, :grouppush, 0)
       end
+      
+    when 'groupadd'
+      usage('vmc groupadd [--deploymentfile FILEPATH]')
+      if @args.size == 1
+        set_cmd(:apps, :groupadd, 1)
+      else
+        set_cmd(:apps, :groupadd, 0)
+      end
 
     when 'update'
       usage('vmc update <appname> [--path PATH]')

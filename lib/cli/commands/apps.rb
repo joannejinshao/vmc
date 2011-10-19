@@ -15,6 +15,7 @@ module VMC::Cli::Command
     #Store xml data
     attr_accessor :groupname, :appsequence
     attr_accessor :applications
+    attr_accessor :addsequence
     
     def list
       apps = client.apps
@@ -746,24 +747,34 @@ module VMC::Cli::Command
       end
     end
  
-    def grouppush
-      path = @options[:filepath]
-      if path == nil
-        path = '.'
+    def grouppush(bAdd=nil)
+      
+      
+      if(!bAdd || bAdd==nil)
+        path = @options[:filepath]
+        if path == nil
+          path = '.'
+        end
+      
+        parseXML(path)
+        display 'Creating Application Group:'.green
+      else
+        display "Adding applications to group #{@groupname}".green
       end
-      
-      parseXML(path)
-      
-      display 'Creating Application Group:'.green
 
       manifest = {
         :groupname => @groupname,
         :appsequence => @appsequence,
       }
+      
       client.create_group(@groupname, manifest)
 
-      
       sequenceArray = @appsequence.split(':')
+      if(bAdd) 
+        sequenceArray = @addsequence.split(':')
+      end
+      display @addsequence
+      display sequenceArray
       
       sequenceArray.each { |saname|
         app = @applications[saname]
@@ -931,8 +942,49 @@ module VMC::Cli::Command
       err "Application '#{appname}' has not started, please run application '#{appname}' first." if app[:state] == 'STOPPED'
     end
     
-    def push(appname=nil)
+    def addElementsToSequence()
+      group = client.group_info(@groupname)
+      oldsequence = group[:sequence]
+      oldsequenceArray = oldsequence.split(':')
       
+      addsequence = ""
+      newsequenceArray = @appsequence.split(':')
+      newsequenceArray.each { |em|
+        if !oldsequenceArray.include?(em)
+          addsequence += em
+          addsequence += ":"
+          maxIndex = nil
+          dependencies = @applications[em]['dependencies']
+          display dependencies
+          dependencies.each_key { |key|
+            if !maxIndex || maxIndex < oldsequenceArray.index(key)
+              maxIndex = oldsequenceArray.index(key)
+            end 
+          }
+          oldsequenceArray.insert(maxIndex+1, em)
+        end
+      }
+      sequence = ""
+      oldsequenceArray.each { |em|
+        sequence += em
+        sequence += ":"
+      }
+      @appsequence = sequence
+      @addsequence = addsequence
+    end
+    
+    def groupadd
+      path = @options[:filepath]
+      if path == nil
+        path = '.'
+      end
+      
+      parseXML(path)
+      addElementsToSequence()
+      grouppush(true)
+    end
+    
+    def push(appname=nil)
       instances = @options[:instances] || 1
       exec = @options[:exec] || 'thin start'
       ignore_framework = @options[:noframework]
@@ -970,8 +1022,8 @@ module VMC::Cli::Command
 
       path = File.expand_path(path)
       check_deploy_directory(path)
-
-      framework = parseXML(path)      
+      
+      framework = parseXML(path);
       
       appname = ask("Application Name: ") unless no_prompt || appname
       err "Application Name required." if appname.nil? || appname.empty?
@@ -1043,7 +1095,6 @@ module VMC::Cli::Command
 
       display 'Creating Application: ', false
 
-      display @applications
       manifest = {
         :name => "#{appname}",
         :staging => {
