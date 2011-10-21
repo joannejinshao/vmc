@@ -666,7 +666,6 @@ module VMC::Cli::Command
           
           applications[appname] = application
           
-          framework
         }
         
         cycleCheckHash = Hash.new(nil)
@@ -696,6 +695,7 @@ module VMC::Cli::Command
       else
         err "Can not find out user's config file!"
       end
+      
       framework
     end
     
@@ -773,11 +773,10 @@ module VMC::Cli::Command
       if(bAdd) 
         sequenceArray = @addsequence.split(':')
       end
-      display @addsequence
-      display sequenceArray
       
       sequenceArray.each { |saname|
         app = @applications[saname]
+        display @applications
         dependencies = app['dependencies']
         dependencies.each_key { |key|
           checkCService(key)          
@@ -946,9 +945,10 @@ module VMC::Cli::Command
       group = client.group_info(@groupname)
       oldsequence = group[:sequence]
       oldsequenceArray = oldsequence.split(':')
-      
+
       addsequence = ""
       newsequenceArray = @appsequence.split(':')
+      
       newsequenceArray.each { |em|
         if !oldsequenceArray.include?(em)
           addsequence += em
@@ -994,6 +994,7 @@ module VMC::Cli::Command
       appname = @options[:name] unless appname
       url = @options[:url]
       mem, memswitch = nil, @options[:mem]
+      group = @options[:groupname]
       memswitch = normalize_mem(memswitch) if memswitch
 
       # Check app existing upfront if we have appname
@@ -1024,9 +1025,15 @@ module VMC::Cli::Command
       check_deploy_directory(path)
       
       framework = parseXML(path);
+      addElementsToSequence()
+      
       
       appname = ask("Application Name: ") unless no_prompt || appname
       err "Application Name required." if appname.nil? || appname.empty?
+
+      if(!@applications.include?(appname))
+        err "Can not find out #{appname}\'s configuration file"
+      end
 
       unless app_checked
         err "Application '#{appname}' already exists, use update or delete." if app_exists?(appname)
@@ -1094,7 +1101,15 @@ module VMC::Cli::Command
       check_has_capacity_for(mem_quota * instances) unless no_start
 
       display 'Creating Application: ', false
-
+      
+      
+      manifest = {
+        :groupname => @groupname,
+        :appsequence => @appsequence,
+      }
+      
+      client.create_group(@groupname, manifest)
+      
       manifest = {
         :name => "#{appname}",
         :staging => {
@@ -1107,7 +1122,7 @@ module VMC::Cli::Command
           :memory => mem_quota
           
         },
-        
+        :groupName => group,
         :dependencies => @applications[appname]["dependencies"],        
         :args => @applications[appname]["args"],
         :mainclass => @applications[appname]["mainclass"]

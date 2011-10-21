@@ -28,6 +28,7 @@ class VMC::Cli::Runner
 
       opts.on('--deploymentfile FILEPATH') { |path| @options[:filepath] = path}
       opts.on('--grouppath GROUPPATH') { |path| @options[:grouppath] = path}
+      opts.on('--group GROUPNAME') {|name| @options[:groupname] = name}
       
       opts.on('--email EMAIL')     { |email| @options[:email] = email }
       opts.on('--user EMAIL')      { |email| @options[:email] = email }
@@ -316,7 +317,7 @@ class VMC::Cli::Runner
       set_cmd(:apps, :crashlogs, 1)
 
     when 'push'
-      usage('vmc push [appname] [--path PATH] [--url URL] [--instances N] [--mem] [--runtime RUNTIME] [--no-start]')
+      usage('vmc push [appname] [--path PATH] [--url URL] [--instances N] [--mem] [--runtime RUNTIME] [--no-start] [--group]')
       if @args.size == 1
         set_cmd(:apps, :push, 1)
       else
