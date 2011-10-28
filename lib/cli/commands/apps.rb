@@ -32,7 +32,7 @@ module VMC::Cli::Command
         end
       end
       display apps_table
-    end
+    end    
 
     alias :apps :list
 
@@ -153,6 +153,19 @@ module VMC::Cli::Command
         display 'OK'.green     
     end
     
+    def groups
+      groups = client.groups
+      display "\n"
+      return display "No Groups" if groups.nil? || groups.empty?
+      groups_table = table do |t|
+        t.headings = 'Group', 'Sequence'
+        groups.each do |group|
+          t << [group[:name], group[:sequence]]
+        end
+      end
+      display groups_table
+    end
+    
     def groupstop(groupname)
       display "Stop application group '#{groupname}' :".green
       group = client.group_info(groupname)
@@ -189,6 +202,10 @@ module VMC::Cli::Command
         start_app(em)
       }
       display "OK".green
+    end
+    
+    def groupremove(groupname, appname)
+      group = client.group_remove(groupname, appname)
     end
 
     def restart(appname)
@@ -324,7 +341,7 @@ module VMC::Cli::Command
         display "Delete application #{em}".green
         delete(em)
       }
-      client.delete_group(groupname)
+      #client.delete_group(groupname)
       display "OK"      
     end
 
@@ -788,7 +805,7 @@ module VMC::Cli::Command
         end
 
         app = @applications[saname]
-        display @applications
+        # display @applications
         dependencies = app['dependencies']
         dependencies.each_key { |key|
           checkCService(key)          

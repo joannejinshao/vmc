@@ -3,7 +3,7 @@
 <Applications name="CFTest"
 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 xsi:noNamespaceSchemaLocation="cf.xsd">
-
+		
 	<Application>
 		<Name>key</Name>
 		<Framework>Java</Framework>
@@ -16,6 +16,7 @@ xsi:noNamespaceSchemaLocation="cf.xsd">
 	</Application>
 
 	<Application>
+
 		<Name>history</Name>
 		<Framework>Java</Framework>
 		<Instances>1</Instances>
@@ -36,7 +37,6 @@ xsi:noNamespaceSchemaLocation="cf.xsd">
 		</MainClass>
 	</Application>
 
-	
 
 	<Application>
 		<Name>test</Name>
@@ -47,7 +47,5 @@ xsi:noNamespaceSchemaLocation="cf.xsd">
 			<Dependency name="history" cascade="true"></Dependency>		
 		</Dependencies>
 	</Application>
-
-	
 
 </Applications>

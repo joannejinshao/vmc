@@ -217,7 +217,7 @@ class VMC::Cli::Runner
       
     when 'groups'
       usage('vmc groups')
-      set_cmd(:apps, :apps)
+      set_cmd(:apps, :groups)
 
     when 'list'
       usage('vmc list')
@@ -246,6 +246,11 @@ class VMC::Cli::Runner
     when 'grouprestart'
       usage('vmc restart <groupname>')
       set_cmd(:apps, :grouprestart, 1)
+    
+    
+    when 'groupremove'
+      usage('vmc groupremove <groupname> <appname>')
+      set_cmd(:apps, :groupremove, 2)
 
     when 'rename'
       usage('vmc rename <appname> <newname>')
