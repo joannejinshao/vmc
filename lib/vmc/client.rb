@@ -57,6 +57,16 @@ class VMC::Client
     check_login_status
     json_get("#{VMC::GROUP_PATH}/#{name}")
   end
+  
+  def group_status(name)
+    check_login_status
+    json_get("#VMC::APPS_PATH/#{name}/status")
+  end
+  
+  def set_groupstatus(name,manifest={})
+    check_login_status
+    json_post("#{VMC::GROUP_PATH}/#{name}/status", manifest)
+  end
 
   def raw_info
     http_get(VMC::INFO_PATH)
@@ -353,7 +363,6 @@ class VMC::Client
 
   def json_post(url, payload)
     http_post(url, payload.to_json, 'application/json')   
-    puts "#{payload}" 
   end
 
   def json_put(url, payload)

@@ -749,7 +749,6 @@ module VMC::Cli::Command
  
     def grouppush(bAdd=nil)
       
-      
       if(!bAdd || bAdd==nil)
         path = @options[:filepath]
         if path == nil
@@ -757,6 +756,7 @@ module VMC::Cli::Command
         end
       
         parseXML(path)
+
         display 'Creating Application Group:'.green
       else
         display "Adding applications to group #{@groupname}".green
@@ -775,6 +775,18 @@ module VMC::Cli::Command
       end
       
       sequenceArray.each { |saname|
+        if(app_exists?(saname))
+          display "Application '#{saname}' has already exist".green
+          bcontinue = ask('Do you want to continue? [Yn]: ')
+          if bcontinue.upcase == 'N'
+            break
+          else
+            myapp = client.app_info(saname)
+            err "Application '#{saname}' has not started, please run application '#{saname}' first." unless myapp[:state] != 'RUNNING'
+            next
+          end
+        end
+
         app = @applications[saname]
         display @applications
         dependencies = app['dependencies']
@@ -932,6 +944,12 @@ module VMC::Cli::Command
       }
 =end      
       }
+      
+      gstatus = {
+        :groupname => @groupname,
+        :status => "1"
+      }
+      client.set_groupstatus(@groupname, gstatus)
         
     end
  
