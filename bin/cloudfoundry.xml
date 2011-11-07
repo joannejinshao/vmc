@@ -28,7 +28,7 @@ xsi:noNamespaceSchemaLocation="cf.xsd">
 				<destination type="cmd" />				
 			</Port>
 			<Port name="port2">
-				<destination type="file" path="/settings.xml"  placeholder="$PORT" />				
+				<destination type="file" path="/settings.xml"  placeholder="$PORT"/>				
 			</Port>		
 		</Ports>
 		<MainClass>

@@ -692,7 +692,6 @@ module VMC::Cli::Command
           if value
            isCircle = checkCircleDepend(cycleCheckHash, value, dependenRecord)
           end
-          
           if isCircle == true
             err "Exist cycle dependent, please check your configuration file!"
           end
@@ -717,17 +716,30 @@ module VMC::Cli::Command
     end
     
     def checkCircleDepend(cycleCheckHash, nextnode, record)
+      result = false
+      tmpCycleHash = Hash.new(nil)
+      cycleCheckHash.each { |key,value|
+        tmpCycleHash[key] = value
+      }
       if(nextnode == nil) 
         return false
       end
       nextnode.each { |em|
-        if cycleCheckHash[em] != nil
+        if tmpCycleHash[em] == 1
           return true
         else
-          cycleCheckHash[em] = 1
-          checkCircleDepend(cycleCheckHash, record[em], record)
+          tmpCycleHash[em] = 1
+          result = checkCircleDepend(tmpCycleHash, record[em], record)
+          if result == true
+            return result
+          end
         end
+        tmpCycleHash.clear
+        cycleCheckHash.each { |key,value|
+          tmpCycleHash[key] = value
+        }
       }
+      return false
     end
 
     def generateAppSequence(record,key,sequence)
