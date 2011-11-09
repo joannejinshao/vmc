@@ -16,7 +16,6 @@ xsi:noNamespaceSchemaLocation="cf.xsd">
 	</Application>
 
 	<Application>
-
 		<Name>history</Name>
 		<Framework>Java</Framework>
 		<Instances>1</Instances>

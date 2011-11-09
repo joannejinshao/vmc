@@ -84,8 +84,8 @@ module VMC::Cli::Command
       app[:state] = 'STARTED'
       if @applications
         app[:args] = @applications[appname]['args']
-        app[:ports] = @applications[appname]['ports']
-        app[:main_class] = @applications[appname]['mainclass']
+        # app[:ports] = @applications[appname]['ports']
+        # app[:main_class] = @applications[appname]['mainclass']
       end
       client.update_app(appname, app)
 
@@ -931,7 +931,8 @@ module VMC::Cli::Command
         :dependencies => app["dependencies"],        
         :args => app["args"],
         :mainclass => app["mainclass"],
-        :groupName => app["groupName"]
+        :groupName => app["groupName"],
+        :ports => app["ports"]
       }
       
       # Send the manifest to the cloud controller
@@ -1071,7 +1072,10 @@ module VMC::Cli::Command
       path = File.expand_path(path)
       check_deploy_directory(path)
       
-      framework = parseXML(path);
+      parseXML(path);
+      unless @applications[appname]["framework"]
+        framework = @applications[appname]["framework"]
+      end
       addElementsToSequence()
       
       
@@ -1168,17 +1172,12 @@ module VMC::Cli::Command
         :resources => {
           :memory => mem_quota
           
-        },
+        },        
         :groupName => group,
         :dependencies => @applications[appname]["dependencies"],        
         :args => @applications[appname]["args"],
-        :mainclass => @applications[appname]["mainclass"]
-        #:isService => @isService,
-        #:cService => @cService,
-        #:args => @args,
-        #:apptype => @apptype,
-        #:main_class => @main_class,
-        #:ports => @ports
+        :mainclass => @applications[appname]["mainclass"],
+        :ports =>  @applications[appname]["ports"] 
       }
       
       
