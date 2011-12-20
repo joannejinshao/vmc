@@ -287,7 +287,6 @@ module VMC::Cli::Command
 
     def delete(appname=nil)
       sequence = client.get_sequence(appname)
-      display sequence
       if sequence
         sequence[:sequence].reverse!
         sequence[:sequence].each { |em|
@@ -320,7 +319,7 @@ module VMC::Cli::Command
         end
         services_to_delete << service if del_service.upcase == 'Y'
       }
-      display "Deleting application [#{appname}]: ", false
+      display "Deleting application [#{appname}]: ".green, false
       client.delete_app(appname)
       display 'OK'.green
 
@@ -1003,7 +1002,6 @@ module VMC::Cli::Command
           addsequence += ":"
           maxIndex = nil
           dependencies = @applications[em]['dependencies']
-          display dependencies
           dependencies.each_key { |key|
             if !maxIndex || maxIndex < oldsequenceArray.index(key)
               maxIndex = oldsequenceArray.index(key)

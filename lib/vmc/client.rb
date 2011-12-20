@@ -373,9 +373,6 @@ class VMC::Client
 
   def json_post(url, payload)
     http_post(url, payload.to_json, 'application/json')   
-
-    puts "#{payload}" 
-
   end
 
   def json_put(url, payload)

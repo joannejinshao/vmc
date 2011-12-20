@@ -5,37 +5,36 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 xsi:noNamespaceSchemaLocation="cf.xsd">
 		
 	<Application>
-		<Name>key</Name>
-		<Framework>Java</Framework>
-		<Instances>1</Instances>
-		<Ports>		
+  		<Name>key</Name> 
+  		<Framework>Java</Framework> 
+  		<Instances>1</Instances> 
+		<Ports>
 			<Port name="port" primary="true">
-				<destination type="cmd" />				
-			</Port>
-		</Ports>
-	</Application>
+  			<destination type="cmd" /> 
+  			</Port>
+  		</Ports>
+  	</Application>
 
 	<Application>
-		<Name>history</Name>
-		<Framework>Java</Framework>
-		<Instances>1</Instances>
-		<Dependencies>
-			<Dependency name="key" cascade="true"></Dependency>	
-		</Dependencies>
-		<Ports>		
+  		<Name>history</Name> 
+  		<Framework>Java</Framework> 
+  		<Instances>1</Instances> 
+ 		<Dependencies>
+  			<Dependency name="key" cascade="true" /> 
+  			</Dependencies>
+		<Ports>
 			<Port name="port" primary="true">
-				<destination type="cmd" />				
-			</Port>
+  				<destination type="cmd" /> 
+  			</Port>
 			<Port name="port2">
-				<destination type="file" path="/settings.xml"  placeholder="$PORT"/>				
-			</Port>		
-		</Ports>
+  				<destination type="file" path="/settings.xml" placeholder="$PORT" /> 
+  			</Port>
+  		</Ports>
 		<MainClass>
-			<LibPath>history_lib</LibPath>
-			<Main>com.vmware.util.ContactHistory</Main>
-		</MainClass>
-	</Application>
-
+  			<LibPath>history_lib</LibPath> 
+  			<Main>com.vmware.util.ContactHistory</Main> 
+  		</MainClass>
+  	</Application>
 
 	<Application>
 		<Name>test</Name>
